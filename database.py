@@ -3,13 +3,22 @@ import math
 import csv
 import getpass
 
-file = open("\\wsl.localhost\Ubuntu\home\crowntheend\Boot_dev\Personal_Project_1\database.csv", "r+")
-file_info = file.read()
-file.write("info")
+#file = open("\\wsl.localhost\Ubuntu\home\crowntheend\Boot_dev\Personal_Project_1\database.csv", "r+")
+#file_info = file.read()
+#file.write("info")
 
-data = {}
-admin = {}
+data = {"pornhub.com": ("andass", "ilovedicks11", "80085", "G4MB4")}
+admin = {"dicklover": "admin"}
 logged_in = False
+
+# Decorator definition
+def requires_login(func):
+    def wrapper(*args, **kwargs):
+        if not logged_in:
+            print("Error: Not logged in.")
+            return
+        return func(*args, **kwargs)
+    return wrapper
 
 def login(admin):
     global logged_in
@@ -36,13 +45,12 @@ def logout():
     else:
         print("Invalid input. Please enter 'y' or 'n'.")
     
-
+@requires_login
 def add_entry(website, password, username="", pin="", recovery_token=""):
     data[website] = password, username, pin, recovery_token
 
-
-    
-def delete_entry(data): # this still needs to be only accessible after the user has logged in
+@requires_login
+def delete_entry(data): 
     if len(data) == 0:
         print("Error: There are no saved passwords.")
         return
@@ -73,12 +81,76 @@ def delete_entry(data): # this still needs to be only accessible after the user 
         
         else:
             print(f"Command '{selection}' not recognized or website '{selection}' not found in the data. Please try again.")
+
+@requires_login
+def modify_entry(data):
+    if len(data) == 0:
+        print("Error: There are no saved passwords.")
+        return
+    
+    while True:
+        print("Please input a website to modify, type 'cancel' to exit or 'list' to list saved passwords:")
+        selection = input("> ").strip().lower()
+
+        if selection == 'cancel':
+            print("Modification canceled.")
+            break
         
-def get_user_input(): # this still needs to be only accessible after the user has logged in
+        elif selection == 'list':
+            items_per_page(data)
+            continue
+        
+        elif selection in data:
+            confirmation = input(f"Which part of '{selection}' would you like to modify? (website/password/username/pin/rtoken): ").strip().lower()
+            if confirmation == 'website':
+                new_website = input("Please type in new website: ").strip()
+                if new_website in data:
+                    print("Error: The new website already exists in the data.")
+                else:
+                    value = data.pop(selection)
+                    data[new_website] = value
+                    print(f"Modified: {selection} to {new_website}")
+                break
+            elif confirmation == 'password':
+                new_password = getpass.getpass("Please type in new password: ").strip()
+                password, username, pin, recovery_token = data[selection]
+                if new_password == password:
+                    print("Error: This is already the password.")
+                else:
+                    data[selection] = (new_password, username, pin, recovery_token)
+                    print("New password saved.")
+                break
+            elif confirmation == 'username':
+                old_username = data[selection][1] #username is the 2nd index of data keys.
+                new_username = input("Please type in new username: ").strip()
+                password, username, pin, recovery_token = data[selection]
+                if new_username == username:
+                    print("Error: This is already the username.")
+                else:
+                    data[selection] = (password, new_username, pin, recovery_token)
+                    print(f"Modified: {old_username} to {new_username}")
+                break
+            elif confirmation == 'pin':
+                new_pin = getpass.getpass("Please type in new pin: ").strip()
+                password, username, pin, recovery_token = data[selection]
+                if new_pin == pin:
+                    print("Error: This is already the pin.")
+                else:
+                    data[selection] = (password, username, new_pin, recovery_token)
+                    print("New pin saved.")
+            else:
+                print("Invalid input. Please enter 'y' or 'n'.")
+        
+        else:
+            print(f"Command '{selection}' not recognized or website '{selection}' not found in the data. Please try again.")
+        
+@requires_login        
+def get_user_input(): 
     command = input("Enter 'next', 'prev', a page number, or 'return': ").strip().lower()
     return command
 
-def items_per_page(data): # this still needs to be only accessible after the user has logged in
+@requires_login
+def items_per_page(data): 
     websites = sorted(list(data.items()))
     list_of_dicts = []
     item_range = 20
