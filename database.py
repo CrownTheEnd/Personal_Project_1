@@ -3,10 +3,6 @@ import math
 import csv
 import getpass
 
-#file = open("\\wsl.localhost\Ubuntu\home\crowntheend\Boot_dev\Personal_Project_1\database.csv", "r+")
-#file_info = file.read()
-#file.write("info")
-
 data = {"pornhub.com": ("andass", "ilovedicks11", "80085", "G4MB4")}
 admin = {"dicklover": "admin"}
 logged_in = False
@@ -20,7 +16,7 @@ def requires_login(func):
         return func(*args, **kwargs)
     return wrapper
 
-def login(admin):
+def login(admin): # add return to exit! don't forget
     global logged_in
     username = input("Please input username: ")
     if username in admin:
@@ -30,8 +26,12 @@ def login(admin):
             logged_in = True
         else:
             print("Wrong Password.")
-    else:
+    elif len(username) > 1 and username not in admin:
         print("Username doesn't exist.")
+        login(admin)
+    else:
+        if len(username) < 1:
+            return
         
 def logout():
     global logged_in
@@ -45,9 +45,8 @@ def logout():
     else:
         print("Invalid input. Please enter 'y' or 'n'.")
     
-@requires_login
-def add_entry(website, password, username="", pin="", recovery_token=""):
-    data[website] = password, username, pin, recovery_token
+
+
 
 @requires_login
 def delete_entry(data): 
@@ -70,8 +69,8 @@ def delete_entry(data):
         elif selection in data:
             confirmation = input(f"Are you sure you want to delete '{selection}'? (y/n): ").strip().lower()
             if confirmation == 'y':
-                deleted_value = data.pop(selection)
-                print(f"Deleted: {selection}: {deleted_value}")
+                data.pop(selection)
+                print(f"Deleted information for: {selection}")
                 break
             elif confirmation == 'n':
                 print("Deletion canceled.")
@@ -154,44 +153,52 @@ def items_per_page(data):
     websites = sorted(list(data.items()))
     list_of_dicts = []
     item_range = 20
+
+    # Generate the list_of_dicts with correct slicing
+    while websites:
+        pages_dict = {}
+        for website, password in websites[:item_range]:
+            pages_dict[website] = password
+        list_of_dicts.append(pages_dict)
+        websites = websites[item_range:]
+
+    pages = len(list_of_dicts)
     current_page = 0
-    pages = (len(websites) // 20) + (1 if len(websites) % 20 != 0 else 0)
-    
-    if len(websites) <= 20:
-        print(f"Page 1: {websites}")
-    else:
-        while websites:
-            pages_dict = {}
-            for website, password in websites[:item_range]:
-                pages_dict[website] = password
-            list_of_dicts.append(pages_dict)
-            websites = websites[item_range:]
+
+    # Print the initial page if it exists
+    if pages > 0:
+        print(f"Page {current_page + 1}: {list_of_dicts[current_page]}")
 
     while True:
-        print(f"Page {current_page + 1}: {list_of_dicts[current_page]}")
-        command = get_user_input()
+        command = input("Please input a command, type 'next' to move to the next page, 'prev' to move back a page, a page number to navigate directly or type 'cancel' to exit:\n> ")
 
         if command == "next":
             if current_page < pages - 1:
                 current_page += 1
+                print(f"Page {current_page + 1}: {list_of_dicts[current_page]}")
             else:
                 print("You are already on the last page.")
         elif command == "prev":
             if current_page > 0:
                 current_page -= 1
+                print(f"Page {current_page + 1}: {list_of_dicts[current_page]}")
             else:
                 print("You are already on the first page.")
         elif command.isdigit():
             page_number = int(command) - 1
             if 0 <= page_number < pages:
                 current_page = page_number
+                print(f"Page {current_page + 1}: {list_of_dicts[current_page]}")
             else:
                 print("Invalid page number.")
         elif command == "return":
             print("Returning to the previous command...")
             break
+        elif command == "cancel":
+            print("Exiting...")
+            return
         else:
-            print("Invalid command. Please enter 'next', 'prev', a page number, or 'return_to_previous'.")
+            print("Invalid command. Please enter 'next', 'prev', a page number, 'list', 'cancel', or 'return'.")
     
     
     
