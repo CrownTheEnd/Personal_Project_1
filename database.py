@@ -3,9 +3,10 @@ import math
 import csv
 import getpass
 
-data = {"pornhub.com": ("andass", "ilovedicks11", "80085", "G4MB4")}
-admin = {"dicklover": "admin"}
+data = {}
+admin = {}
 logged_in = False
+current_user = ""
 
 # Decorator definition
 def requires_login(func):
@@ -18,12 +19,21 @@ def requires_login(func):
 
 def login(admin): # add return to exit! don't forget
     global logged_in
+    global current_user
     username = input("Please input username: ")
     if username in admin:
-        password = getpass.getpass("Enter your password: ")
-        if password == admin[username]:
+        password = getpass.getpass("Enter your password or if you have forgotten your password, type help: ")
+        if password == admin[username][0]:
             print("Succesfully logged in.")
             logged_in = True
+            current_user = username
+        elif password == "help":
+            recover = input("Please type in your recovery token.\n")
+            if recover == admin[username][1]:
+                print(f"The password for this account is: {admin[username][0]}")
+                login(admin)
+            else:
+                print("Wrong token.\n")    
         else:
             print("Wrong Password.")
     elif len(username) > 1 and username not in admin:
@@ -35,15 +45,17 @@ def login(admin): # add return to exit! don't forget
         
 def logout():
     global logged_in
+    global current_user
     confirm = input("Are you sure you want to logout? y/n")
     if confirm.lower() == "y":
         print("Succesfully logged out.")
         logged_in = False
+        current_user = ""
     elif confirm.lower() == "n":
             print("Understood, resuming operations.")
             return
     else:
-        print("Invalid input. Please enter 'y' or 'n'.")
+        print("Invalid input. Please enter 'y' or 'n'.\n")
     
 
 
@@ -82,22 +94,43 @@ def delete_entry(data):
             print(f"Command '{selection}' not recognized or website '{selection}' not found in the data. Please try again.")
 
 @requires_login
-def modify_entry(data):
+def modify_entry(data, admin):
     if len(data) == 0:
         print("Error: There are no saved passwords.")
         return
     
     while True:
-        print("Please input a website to modify, type 'cancel' to exit or 'list' to list saved passwords:")
+        print("Please input a website to modify, type 'user' to modify the user credentials, hit 'return' to exit or 'list' to list saved passwords:")
         selection = input("> ").strip().lower()
 
-        if selection == 'cancel':
+        if len(selection) < 1:
             print("Modification canceled.")
             break
         
         elif selection == 'list':
             items_per_page(data)
             continue
+        
+        elif selection == 'user':
+            confirmation = input("Type 'username' to change your username or 'password' to change your password:\n")
+            if confirmation == 'username':
+                new_username = input("Please type your new username:\n")
+                while new_username in admin:
+                    new_username = input("Username already exists! Please try again or hit 'enter' to exit.\n")
+                    if new_username == "":
+                        return
+                if new_username not in admin:
+                    admin[new_username] = admin.pop(current_user)
+                    print(f"Username changed successfully from '{current_user}' to '{new_username}'")
+            
+            if confirmation == 'password':
+                new_password = getpass.getpass("Please type your new password:\n")
+                while new_password == admin[current_user][0]:
+                    new_password = getpass.getpass("This is already your password! Please try again or hit 'enter' to exit.\n")
+                    if new_password == "":
+                        return
+                admin[current_user][0] = new_password
+                print(f"Password successfully changed!")
         
         elif selection in data:
             confirmation = input(f"Which part of '{selection}' would you like to modify? (website/password/username/pin/rtoken): ").strip().lower()
@@ -145,7 +178,9 @@ def modify_entry(data):
         
 @requires_login        
 def get_user_input(): 
-    command = input("Enter 'next', 'prev', a page number, or 'return': ").strip().lower()
+    command = input("Enter 'next', 'prev', a page number, or hit 'return': ").strip().lower()
+    if len(command) < 1:
+        return command
     return command
 
 @requires_login

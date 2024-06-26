@@ -1,8 +1,8 @@
 import getpass
 import database
 import ast
-from utility_functions import write_to_database, write_to_users
-from database import (data, admin, requires_login)
+from utility_functions import write_to_database, write_to_users, generate_token
+from database import (data, admin, current_user)
 
 with open('/home/crowntheend/Boot_dev/Personal_Project_1/database.txt', 'r') as file:
     data_content = file.read()
@@ -26,10 +26,18 @@ def main():
             
             username = input("Please type in a username:\n")
             password = getpass.getpass("Please type in a password:\n")
-            admin[username] = password
+            token = generate_token(20)
+            admin[username] = [password, token]
             write_to_users(admin)
+            final = input(f"Your recovery key is: '{token}'\nPlease keep it safe in case you ever wish to recover the account. Type 'ok' to continue.\n")
+            type_ok = ""
+            if final != "ok":
+                while type_ok.lower() != "ok":
+                    type_ok = input("Type 'ok' to continue.\n")
+                    if type_ok.lower() != "ok":
+                        print("Incorrect input!")
             print("Account successfully created, you may now login!\n")
-        
+                
         elif confirmation.lower() == "n":
             return
         
@@ -45,6 +53,7 @@ def main():
         print("3: Delete entry.")
         print("4: List entries.")
         print("5: Logout")
+        print("\n6: PURGE DATABASE")
         option_number = input()
         if option_number == "1":
             website_input = input("Please input the website name: ")
@@ -60,16 +69,19 @@ def main():
                     username_input = input("Please input the username or hit 'enter' to skip: ")
                     pin_input = getpass.getpass("Please input the pin or hit 'enter' to skip: ")
                     rtoken_input = input("Please input the recovery token or hit 'enter' to skip: ")
-                    data[website_input] = password_input, username_input, pin_input, rtoken_input
+                    data[website_input] = [password_input, username_input, pin_input, rtoken_input]
                     write_to_database(data)
         if option_number == "2":
-            database.modify_entry(data)
+            print(f"{current_user}")
+            database.modify_entry(data, admin)
             write_to_database(data)
         if option_number == "3":
             database.delete_entry(data)
             write_to_database(data)
         if option_number == "4":
             database.items_per_page(data)
+        if option_number == "5":
+            database.logout()
         if option_number == "5":
             database.logout()
 
