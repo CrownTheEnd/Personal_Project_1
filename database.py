@@ -1,12 +1,10 @@
-import bcrypt
-import math
-import csv
 import getpass
+from utility_functions import check_password, hash_password, write_to_users
 
 data = {}
 admin = {}
 logged_in = False
-current_user = ""
+current_user = []
 
 # Decorator definition
 def requires_login(func):
@@ -23,14 +21,20 @@ def login(admin): # add return to exit! don't forget
     username = input("Please input username: ")
     if username in admin:
         password = getpass.getpass("Enter your password or if you have forgotten your password, type help: ")
-        if password == admin[username][0]:
+        if check_password(password, admin[username][0]):
             print("Succesfully logged in.")
             logged_in = True
-            current_user = username
+            current_user.append(username)
+            current_user.append(password)
+            current_user.append(admin[username][2])
         elif password == "help":
             recover = input("Please type in your recovery token.\n")
-            if recover == admin[username][1]:
-                print(f"The password for this account is: {admin[username][0]}")
+            if check_password(recover, admin[username][1]):
+                new_password = getpass.getpass("Please type in your new password: ")
+                hashed_new_password = hash_password(new_password)
+                admin[username][0] = hashed_new_password
+                print(f"Password successfully reset!")
+                write_to_users(admin)
                 login(admin)
             else:
                 print("Wrong token.\n")    
@@ -46,11 +50,12 @@ def login(admin): # add return to exit! don't forget
 def logout():
     global logged_in
     global current_user
-    confirm = input("Are you sure you want to logout? y/n")
+    confirm = input("Are you sure you want to logout? y/n\n")
     if confirm.lower() == "y":
         print("Succesfully logged out.")
         logged_in = False
-        current_user = ""
+        current_user = []
+        return
     elif confirm.lower() == "n":
             print("Understood, resuming operations.")
             return
@@ -95,7 +100,7 @@ def delete_entry(data):
 
 @requires_login
 def modify_entry(data, admin):
-    if len(data) == 0:
+    if len(data) == 0 and len(admin) == 0:
         print("Error: There are no saved passwords.")
         return
     
@@ -205,7 +210,7 @@ def items_per_page(data):
         print(f"Page {current_page + 1}: {list_of_dicts[current_page]}")
 
     while True:
-        command = input("Please input a command, type 'next' to move to the next page, 'prev' to move back a page, a page number to navigate directly or type 'cancel' to exit:\n> ")
+        command = input("Please input a command, type 'next' to move to the next page, 'prev' to move back a page, a page number to navigate directly or type 'cancel' or hit enter to exit:\n> ")
 
         if command == "next":
             if current_page < pages - 1:
@@ -226,14 +231,8 @@ def items_per_page(data):
                 print(f"Page {current_page + 1}: {list_of_dicts[current_page]}")
             else:
                 print("Invalid page number.")
-        elif command == "return":
-            print("Returning to the previous command...")
-            break
-        elif command == "cancel":
+        elif command == "cancel" or len(command) < 1:
             print("Exiting...")
             return
         else:
             print("Invalid command. Please enter 'next', 'prev', a page number, 'list', 'cancel', or 'return'.")
-    
-    
-    

@@ -1,1 +1,1 @@
-{'pornhub.com': ['admin', '', '', '']}
+{'nintendo.com': ['mario', 'yann', '88005', 'idk']}

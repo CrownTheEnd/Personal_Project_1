@@ -1,1 +1,1 @@
-{'dicklover': ['admin', 'TPgOZckUKHxTPRCodB7Q']}
+{'yann': [b'$2b$12$zoQiR25quobISUcpyuMMl.nrGftMm7/izPzYs0MsRmwB.avuHCXU2', b'$2b$12$7LnooOUeUtNyEC99kEwQiuvn9JVTChFQ.9K0yV7KCe0TBFOoQiNMm', './database/oYXXQuRKLpJiXLH0cX8k.zip']}
